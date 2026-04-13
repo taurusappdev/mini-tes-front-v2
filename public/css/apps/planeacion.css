@@ -1,0 +1,46 @@
+.planning-wrap{
+  max-width: 1100px;
+}
+
+.planning-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.planning-actions{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+.planning-textarea{
+  min-height: 140px;
+  margin-top: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.planning-row{
+  margin-top: 12px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+
+.planning-error{
+  margin-top: 12px;
+  color: #b91c1c;
+  white-space: pre-wrap;
+}
+
+.planning-warnings{
+  margin: 8px 0 0 18px;
+}
+
+.planning-note{
+  margin-top:10px;
+  font-size:12px;
+}
