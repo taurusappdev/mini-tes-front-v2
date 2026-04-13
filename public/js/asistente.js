@@ -125,11 +125,13 @@
       if (e.animationName === 'slideIn') {
         asistenteVentana.style.animation = 'apple-glow-slow 6s ease-out infinite';
         asistenteVentana.removeEventListener('animationend', handleAnimEnd);
+        currentAnimEndHandler = null;
         const input = document.getElementById('asistentePregunta');
         if (input) input.focus();
         isAnimating = false;
       }
     };
+    currentAnimEndHandler = handleAnimEnd;
     asistenteVentana.addEventListener('animationend', handleAnimEnd);
   }
 
@@ -151,6 +153,7 @@
   }
 
   function cerrarVentana() {
+    if (!asistenteVentana.classList.contains('visible')) return;
     if (isAnimating || isClosing) return;
     isAnimating = true;
     isClosing = true;
@@ -427,7 +430,8 @@
       await waitForIceGatheringComplete(pc);
 
       // 3) Crear call en OpenAI con SDP (WebRTC)
-      const sdpResp = await fetch("https://api.openai.com/v1/realtime/calls", {
+      const realtimeModel = data.model || 'gpt-4o-realtime-preview';
+      const sdpResp = await fetch(`https://api.openai.com/v1/realtime?model=${encodeURIComponent(realtimeModel)}`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${EPHEMERAL_KEY}`,
@@ -487,6 +491,11 @@
             "No pude obtener respuesta del backend.";
 
           // 2) responde a la tool (IMPORTANTE: mismo call_id)
+          if (!dc || dc.readyState !== 'open') {
+            console.error("DataChannel cerrado al intentar responder tool call");
+            return;
+          }
+
           try {
             dc.send(JSON.stringify({
               type: "conversation.item.create",
@@ -535,9 +544,8 @@
   function stopVoice() {
     if (!rt.active) return;
 
-    // Cortar respuesta en curso (si aplica) y limpiar audio
+    // Cortar respuesta en curso (si aplica)
     try { rt.dc?.send(JSON.stringify({ type: "response.cancel" })); } catch {}
-    try { rt.dc?.send(JSON.stringify({ type: "output_audio_buffer.clear" })); } catch {}
 
     try { rt.mic?.getTracks()?.forEach(t => t.stop()); } catch {}
     try { rt.dc?.close(); } catch {}
@@ -582,10 +590,7 @@
 
       await simularEscritura(mensajeAsistente, data.respuesta || '(sin respuesta)');
     } catch (err) {
-      await simularEscritura(
-        mensajeAsistente,
-        'Lo siento, hubo un error al procesar tu solicitud. Por favor, inténtalo nuevamente.'
-      );
+      await simularEscritura(mensajeAsistente, err.message || 'Error desconocido al procesar tu solicitud.');
       console.error(err);
     } finally {
       setTimeout(() => desactivarEfectosProcesamiento(), 400);
